@@ -5,6 +5,7 @@ version := "1.0"
 scalaVersion := "2.12.4"
 
 libraryDependencies ++= Seq(
+  "com.typesafe" % "config" % "1.3.2",
   "org.apache.hive" % "hive-jdbc" % "1.2.1",
   "com.github.scopt" %% "scopt" % "3.7.0"
 )

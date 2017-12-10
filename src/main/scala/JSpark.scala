@@ -1,11 +1,9 @@
 import java.util.Properties
+import com.typesafe.config.ConfigFactory
 import org.apache.hive.jdbc.HiveDriver
 import org.apache.hive.jdbc.Utils
 
-case class Config(url: String = "jdbc:hive2://???",
-                  user: String = "???",
-                  password: String = "???"
-                 )
+case class Config(url: String, user: String, password: String)
 
 object JSpark {
   val argsParser = new scopt.OptionParser[Config]("Simple Jdbc client for Apache Spark") {
@@ -25,7 +23,7 @@ object JSpark {
 
     props.setProperty("user", config.user)
     props.setProperty("password", config.password)
-    println(s"config: $config")
+
     val conn = driver.connect(config.url, props)
 
     if (conn != null) {
@@ -43,16 +41,27 @@ object JSpark {
 
       conn.close()
     } else {
-      System.err.println(
+      throw new IllegalArgumentException(
         s"""
-           |\ERROR: connection is null. Probably, url has wrong format.
-           | url must have the prefix: ${Utils.URL_PREFIX}
+           | Connection ref is null. Probably, url has wrong format.
+           | The url is ${config.url}
+           | It must have the prefix: ${Utils.URL_PREFIX}
          """.stripMargin)
     }
   }
 
+  def appConf: Config = {
+    val conf = ConfigFactory.load()
+
+    Config(
+      url = conf.getString("jdbc.url"),
+      user = conf.getString("credentials.user"),
+      password = conf.getString("credentials.password")
+    )
+  }
+
   def main(args: Array[String]): Unit = {
-    argsParser.parse(args, Config()) match {
+    argsParser.parse(args, appConf) match {
       case Some(config) => run(config)
       case _ => System.err.println("Fix params and try again")
     }
