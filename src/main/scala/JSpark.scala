@@ -1,9 +1,14 @@
 import java.util.Properties
+
 import com.typesafe.config.ConfigFactory
 import org.apache.hive.jdbc.HiveDriver
 import org.apache.hive.jdbc.Utils
+import org.jooq.impl.DSL
 
-case class Config(url: String, user: String, password: String)
+case class Config(url: String,
+                  query: String,
+                  user: String, password: String,
+                  format: String)
 
 object JSpark {
   val argsParser = new scopt.OptionParser[Config]("Simple Jdbc client for Apache Spark") {
@@ -12,9 +17,12 @@ object JSpark {
     opt[String]('u', "url").valueName(Utils.URL_PREFIX + "...").action((x, c) =>
       c.copy(url = x)
     )
+    opt[String]('q', "query").action((x, c) => c.copy(query = x))
 
     opt[String]('n', "name").action((x, c) => c.copy(user = x))
     opt[String]('p', "password").action((x, c) => c.copy(password = x))
+
+    opt[String]('f', "format").action((x, c) => c.copy(format = x))
   }
 
   def run(config: Config): Unit = {
@@ -27,19 +35,23 @@ object JSpark {
     val conn = driver.connect(config.url, props)
 
     if (conn != null) {
-      val stmt = conn.createStatement()
-      val query = "SHOW TABLES"
-      val rs = stmt.executeQuery(query)
+      try {
+        val stmt = conn.createStatement()
+        val resultSet = stmt.executeQuery(config.query)
+        val res = DSL.using(conn).fetch(resultSet)
 
-      println(query)
-      println("---")
-      while (rs.next) {
-        val database = rs.getString("database")
-        val tableName = rs.getString("tableName")
-        println(s"$database.$tableName")
+        val resStr: String = config.format.toLowerCase match {
+          case "json" => res.formatJSON()
+          case "xml" => res.formatXML()
+          case "csv" => res.formatCSV()
+          case "html" => res.formatHTML()
+          case "simple" => res.format()
+          case unknown => throw new IllegalArgumentException(s"Not supported output format $unknown")
+        }
+        System.out.println(resStr)
+      } finally {
+        conn.close()
       }
-
-      conn.close()
     } else {
       throw new IllegalArgumentException(
         s"""
@@ -55,8 +67,10 @@ object JSpark {
 
     Config(
       url = conf.getString("jdbc.url"),
+      query = conf.getString("sql.query"),
       user = conf.getString("credentials.user"),
-      password = conf.getString("credentials.password")
+      password = conf.getString("credentials.password"),
+      format = conf.getString("output.format")
     )
   }
 
