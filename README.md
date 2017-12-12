@@ -63,4 +63,25 @@ output = {
 }
 ```
 
+## Command line options
+
+The options overwrite settings from the config file. JSpark support the following options:
+
+```
+$ java -jar jspark.jar --help
+```
+
+```
+JSpark 1.1
+Usage: Simple Jdbc client for Apache Spark [options]
+
+  -u, --url jdbc:hive2://...
+                           jdbc url with the prefix: jdbc:hive2://
+  -q, --query <value>      sql query like SHOW TABLES
+  -n, --name <value>       
+  -p, --password <value>   
+  -f, --format <value>     output format: json, xml, cvs, html or simple
+  --help                   
+  --version       
+```
 
