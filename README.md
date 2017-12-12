@@ -28,5 +28,39 @@ JSpark can be run with custom config file:
 $ java -Dconfig.file=mycluster.conf -jar jspark.jar
 ```
 
+Configuration file may have at least the following sections:
+
+* **credentials** contains username/password or token. For example:
+```
+credentials = {
+  user = "foo@bar.com"
+  password = "12345678"
+}
+```
+
+* **jdbc** settings like **url** which must have the prefix **jdbc:hive2://**. For example:
+
+```
+jdbc = {
+  url = "jdbc:hive2://shardname.cloud.databricks.com:443/default;transportMode=http;ssl=true;httpPath=sql/protocolv1/o/0/clustername"
+}
+```
+
+* **sql query** that will be executed by default:
+
+```
+sql = {
+  query = "show tables"
+}
+```
+
+* output related settings like **format**. Current versions of jspark supports the following formats: 
+_simple_ (by default), csv, json, html, xml.
+
+```
+output = {
+  format = "simple"
+}
+```
 
 
