@@ -12,21 +12,28 @@ case class Config(url: String,
 
 object JSpark {
   val argsParser = new scopt.OptionParser[Config]("Simple Jdbc client for Apache Spark") {
-    head("JSpark", "1.1")
+    head("JSpark", "1.2")
 
     opt[String]('u', "url")
       .text("jdbc url with the prefix: jdbc:hive2://")
-      .valueName(Utils.URL_PREFIX + "...").action((x, c) => c.copy(url = x))
+      .valueName("string")
+      .action((x, c) => c.copy(url = x))
 
     opt[String]('q', "query")
       .text("sql query like SHOW TABLES")
+      .valueName("string")
       .action((x, c) => c.copy(query = x))
 
-    opt[String]('n', "name").action((x, c) => c.copy(user = x))
-    opt[String]('p', "password").action((x, c) => c.copy(password = x))
+    opt[String]('n', "name")
+      .valueName("string")
+      .action((x, c) => c.copy(user = x))
+    opt[String]('p', "password")
+      .valueName("string")
+      .action((x, c) => c.copy(password = x))
 
     opt[String]('f', "format")
-      .text("output format: json, xml, cvs, html or simple")
+      .text("supported: json, xml, cvs, html or simple")
+      .valueName("string")
       .action((x, c) => c.copy(format = x))
 
     help("help")
