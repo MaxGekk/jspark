@@ -84,4 +84,32 @@ Usage: Simple Jdbc client for Apache Spark [options]
   --help                   
   --version       
 ```
+For example:
 
+```
+$ java -Dconfig.file=mycluster.conf -jar jspark.jar -q "select id, type, priority, status from tickets limit 5"
+```
+
+it outputs result in simple format by default:
+
+```
++----+--------+--------+------+
+|  id|type    |priority|status|
++----+--------+--------+------+
+|9120|problem |urgent  |closed|
+|9121|question|normal  |hold  |
+|9122|incident|normal  |closed|
+|9123|question|normal  |open  |
+|9124|incident|normal  |solved|
++----+--------+--------+------+
+```
+
+or in json format:
+
+```
+$ java -Dconfig.file=mycluster.conf -jar jspark.jar -q "select id, status from tickets" -f json
+```
+
+```
+{"fields":[{"name":"id","type":"BIGINT"},{"name":"status","type":"OTHER"}],"records":[[9120,"closed"],[9121,"hold"],[9122,"closed"],[9123,"open"],[9124,"solved"]]}
+```
