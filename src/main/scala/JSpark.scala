@@ -1,4 +1,5 @@
 import java.util.Properties
+import java.io.{FileWriter, PrintWriter, Writer}
 
 import com.typesafe.config.ConfigFactory
 import org.apache.hive.jdbc.HiveDriver
@@ -8,7 +9,7 @@ import org.jooq.impl.DSL
 case class Config(url: String,
                   query: String,
                   user: String, password: String,
-                  format: String)
+                  output: String, format: String)
 
 object JSpark {
   val argsParser = new scopt.OptionParser[Config]("Simple Jdbc client for Apache Spark") {
@@ -25,6 +26,9 @@ object JSpark {
     opt[String]('n', "name").action((x, c) => c.copy(user = x))
     opt[String]('p', "password").action((x, c) => c.copy(password = x))
 
+    opt[String]('o', "output")
+      .text("stdout or file name")
+      .action((x, c) => c.copy(output = x))
     opt[String]('f', "format")
       .text("output format: json, xml, cvs, html or simple")
       .action((x, c) => c.copy(format = x))
@@ -44,19 +48,18 @@ object JSpark {
 
     if (conn != null) {
       try {
-        val stmt = conn.createStatement()
-        val resultSet = stmt.executeQuery(config.query)
-        val res = DSL.using(conn).fetch(resultSet)
+        val writer = getWriter(config.output)
+        val ctx = DSL.using(conn)
+        val res = ctx.resultQuery(config.query).fetch()
 
-        val resStr: String = config.format.toLowerCase match {
-          case "json" => res.formatJSON()
-          case "xml" => res.formatXML()
-          case "csv" => res.formatCSV()
-          case "html" => res.formatHTML()
-          case "simple" => res.format()
+        config.format.toLowerCase match {
+          case "json" => res.formatJSON(writer)
+          case "xml" => res.formatXML(writer)
+          case "csv" => res.formatCSV(writer)
+          case "html" => res.formatHTML(writer)
+          case "simple" => res.format(writer, Int.MaxValue)
           case unknown => throw new IllegalArgumentException(s"Not supported output format $unknown")
         }
-        System.out.println(resStr)
       } finally {
         conn.close()
       }
@@ -78,8 +81,14 @@ object JSpark {
       query = conf.getString("sql.query"),
       user = conf.getString("credentials.user"),
       password = conf.getString("credentials.password"),
+      output = conf.getString("output.to"),
       format = conf.getString("output.format")
     )
+  }
+
+  def getWriter(it: String): Writer = it match {
+    case "stdout" => new PrintWriter(System.out)
+    case fileName => new FileWriter(fileName)
   }
 
   def main(args: Array[String]): Unit = {
