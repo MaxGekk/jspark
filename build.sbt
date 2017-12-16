@@ -1,6 +1,6 @@
 name := "jspark"
 
-version := "1.1"
+version := "1.2"
 
 scalaVersion := "2.12.4"
 

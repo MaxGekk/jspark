@@ -72,16 +72,41 @@ $ java -jar jspark.jar --help
 ```
 
 ```
-JSpark 1.1
+JSpark 1.2
 Usage: Simple Jdbc client for Apache Spark [options]
 
-  -u, --url jdbc:hive2://...
-                           jdbc url with the prefix: jdbc:hive2://
-  -q, --query <value>      sql query like SHOW TABLES
-  -n, --name <value>       
-  -p, --password <value>   
-  -f, --format <value>     output format: json, xml, cvs, html or simple
-  --help                   
-  --version       
+  -u, --url string       jdbc url with the prefix: jdbc:hive2://
+  -q, --query string     sql query like SHOW TABLES
+  -n, --name string      
+  -p, --password string  
+  -f, --format string    supported: json, xml, cvs, html or simple
+  --help                 
+  --version   
+```
+For example:
+
+```
+$ java -Dconfig.file=mycluster.conf -jar jspark.jar -q "select id, type, priority, status from tickets limit 5"
 ```
 
+it outputs result in simple format by default:
+
+```
++----+--------+--------+------+
+|  id|type    |priority|status|
++----+--------+--------+------+
+|9120|problem |urgent  |closed|
+|9121|question|normal  |hold  |
+|9122|incident|normal  |closed|
+|9123|question|normal  |open  |
+|9124|incident|normal  |solved|
++----+--------+--------+------+
+```
+
+or in json format:
+
+```
+$ java -Dconfig.file=mycluster.conf -jar jspark.jar -q "select id, status from tickets" -f json
+
+{"fields":[{"name":"id","type":"BIGINT"},{"name":"status","type":"OTHER"}],"records":[[9120,"closed"],[9121,"hold"],[9122,"closed"],[9123,"open"],[9124,"solved"]]}
+```
