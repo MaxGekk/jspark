@@ -1,15 +1,15 @@
 import java.util.Properties
 import java.io.{FileWriter, PrintWriter, Writer}
-
 import com.typesafe.config.ConfigFactory
 import org.apache.hive.jdbc.HiveDriver
 import org.apache.hive.jdbc.Utils
 import org.jooq.impl.DSL
+import scala.util.Try
 
-case class Config(url: String,
-                  query: String,
-                  user: String, password: String,
-                  output: String, format: String)
+case class Config(url: Option[String],
+                  query: Option[String],
+                  user: Option[String], password: Option[String],
+                  output: Option[String], format: Option[String])
 
 object JSpark {
   val argsParser = new scopt.OptionParser[Config]("Simple Jdbc client for Apache Spark") {
@@ -17,21 +17,21 @@ object JSpark {
 
     opt[String]('u', "url")
       .text("jdbc url with the prefix: jdbc:hive2://")
-      .valueName(Utils.URL_PREFIX + "...").action((x, c) => c.copy(url = x))
+      .valueName(Utils.URL_PREFIX + "...").action((x, c) => c.copy(url = Some(x)))
 
     opt[String]('q', "query")
       .text("sql query like SHOW TABLES")
-      .action((x, c) => c.copy(query = x))
+      .action((x, c) => c.copy(query = Some(x)))
 
-    opt[String]('n', "name").action((x, c) => c.copy(user = x))
-    opt[String]('p', "password").action((x, c) => c.copy(password = x))
+    opt[String]('n', "name").action((x, c) => c.copy(user = Some(x)))
+    opt[String]('p', "password").action((x, c) => c.copy(password = Some(x)))
 
     opt[String]('o', "output")
       .text("stdout or file name")
-      .action((x, c) => c.copy(output = x))
+      .action((x, c) => c.copy(output = Some(x)))
     opt[String]('f', "format")
       .text("output format: json, xml, cvs, html or simple")
-      .action((x, c) => c.copy(format = x))
+      .action((x, c) => c.copy(format = Some(x)))
 
     help("help")
     version("version")
@@ -41,18 +41,18 @@ object JSpark {
     val driver = new HiveDriver
     val props = new Properties()
 
-    props.setProperty("user", config.user)
-    props.setProperty("password", config.password)
+    props.setProperty("user", config.user.get)
+    props.setProperty("password", config.password.get)
 
-    val conn = driver.connect(config.url, props)
+    val conn = driver.connect(config.url.get, props)
 
     if (conn != null) {
       try {
-        val writer = getWriter(config.output)
+        val writer = getWriter(config.output.getOrElse("stdout"))
         val ctx = DSL.using(conn)
-        val res = ctx.resultQuery(config.query).fetch()
+        val res = ctx.resultQuery(config.query.get).fetch()
 
-        config.format.toLowerCase match {
+        config.format.getOrElse("simple").toLowerCase match {
           case "json" => res.formatJSON(writer)
           case "xml" => res.formatXML(writer)
           case "csv" => res.formatCSV(writer)
@@ -77,12 +77,12 @@ object JSpark {
     val conf = ConfigFactory.load()
 
     Config(
-      url = conf.getString("jdbc.url"),
-      query = conf.getString("sql.query"),
-      user = conf.getString("credentials.user"),
-      password = conf.getString("credentials.password"),
-      output = conf.getString("output.to"),
-      format = conf.getString("output.format")
+      url = Try { conf.getString("jdbc.url") }.toOption,
+      query = Try { conf.getString("sql.query") }.toOption,
+      user = Try { conf.getString("credentials.user") }.toOption,
+      password = Try { conf.getString("credentials.password") }.toOption,
+      output = Try { conf.getString("output.to") }.toOption,
+      format = Try { conf.getString("output.format") }.toOption
     )
   }
 
