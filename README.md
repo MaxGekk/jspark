@@ -22,7 +22,7 @@ JSpark accepts command line arguments and configuration files. Command arguments
 over configuration parameters and overwrite them. Default config file is included in jspark.jar.
 You can find it in the resource folder - [application.conf](https://github.com/MaxGekk/jspark/blob/master/src/main/resources/application.conf).
 
-JSpark can be run with custom config file:
+JSpark can be run with custom config file like [mycluster.conf](https://github.com/MaxGekk/jspark/blob/master/src/main/resources/mycluster.conf)
 
 ```
 $ java -Dconfig.file=mycluster.conf -jar jspark.jar
@@ -50,7 +50,7 @@ jdbc = {
 
 ```
 sql = {
-  query = "show tables"
+  query = "select * from table limit 10"
 }
 ```
 
@@ -59,7 +59,8 @@ _simple_ (by default), csv, json, html, xml.
 
 ```
 output = {
-  format = "simple"
+  format = "json"
+  to = "file.json"
 }
 ```
 
@@ -79,6 +80,7 @@ Usage: Simple Jdbc client for Apache Spark [options]
   -q, --query string     sql query like SHOW TABLES
   -n, --name string      
   -p, --password string  
+  -o, --output string    stdout or file name
   -f, --format string    supported: json, xml, cvs, html or simple
   --help                 
   --version   

@@ -58,7 +58,10 @@ object JSpark {
       try {
         val writer = getWriter(config.output.getOrElse("stdout"))
         val ctx = DSL.using(conn)
-        val res = ctx.resultQuery(config.query.get).fetch()
+        val query = config.query.get
+
+        System.err.println(s"Query:\n $query")
+        val res = ctx.resultQuery(query).fetch()
 
         config.format.getOrElse("simple").toLowerCase match {
           case "json" => res.formatJSON(writer)
@@ -68,6 +71,7 @@ object JSpark {
           case "simple" => res.format(writer, Int.MaxValue)
           case unknown => throw new IllegalArgumentException(s"Not supported output format $unknown")
         }
+        System.err.println(s"\nNumber of rows: ${res.size()}")
       } finally {
         conn.close()
       }
